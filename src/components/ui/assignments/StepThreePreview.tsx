@@ -126,7 +126,10 @@ const StepThreePreview: React.FC<StepThreePreviewProps> = ({
             <CardContent>
               <DataTable
                 columns={columns}
-                data={tickets}
+                data={tickets.map((ticket) => ({
+                  ...ticket,
+                  nombre_tecnico: technicianName, // explicitly set from loop context
+                }))}
               />
               {unassignedTickets.length > 0 && (
                 <div className="mt-4">
