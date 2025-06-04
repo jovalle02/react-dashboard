@@ -1,58 +1,264 @@
-// app/dashboard/technicians/tickets/page.tsx
+"use client";
 
-import { columns, Ticket } from "@/components/ui/table/columns";
+import { useEffect, useState } from "react";
+import { columns as baseColumns, Ticket } from "@/components/ui/table/columns";
 import { DataTable } from "@/components/ui/table/datatable";
-import { fetchAssignedTickets, fetchTechniciansResp } from "@/features/tickets/api";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import TechnicianResponsibilities from "@/components/ui/techniciansresponsability/techniciansresponsabilities";
+import {
+  applyAssignment,
+  fetchTechniciansList,
+  getFinalPriorization,
+  notifyAssignment,
+  submitSetupOrder,
+} from "@/features/tickets/api";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
 import { getTechnicianDisplayName } from "@/lib/labels";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogOverlay,
+} from "@radix-ui/react-dialog";
+import { Button } from "@/components/ui/button";
+import fallbackAssignedTickets from "@/data/fallbackAssignedTickets.json";
+import StepOneRoleSelection from "@/components/ui/assignments/StepOneRoleSelection";
+import StepTwoLimitsSelection from "@/components/ui/assignments/StepTwoLimitsSelection";
+import StepThreePreview from "@/components/ui/assignments/StepThreePreview";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Calendar } from "lucide-react";
 
-/**
- * Displays a page listing all tickets assigned to technicians.
- * 
- * - Uses a card layout to visually separate tickets per technician.
- * - Fetches structured data from the backend: { "Technician Name": Ticket[] }
- * - Reuses the shared `DataTable` and `columns` config for rendering each ticket group.
- */
-export default async function TechnicianTicketsPage() {
-  // Fetch the assigned tickets grouped by technician
-  const res = await fetchAssignedTickets();
-  const roles = await fetchTechniciansResp();
+export default function TechnicianTicketsPage() {
+  const [dryRun, setDryRun] = useState(false);
+  const [reassignAll, setReassignAll] = useState(false);
+  const [technicianMap, setTechnicianMap] = useState<Record<string, Ticket[]>>({});
+  const [previewMap, setPreviewMap] = useState<Record<string, Ticket[]>>(fallbackAssignedTickets);
+  const [showModal, setShowModal] = useState(true);
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [maxByType, setMaxByType] = useState({ Soporte: 5, Instalacion: 5 });
+  const [unassignedTickets, setUnassignedTickets] = useState<Ticket[]>([]);
+  const [selectedTicketToAssign, setSelectedTicketToAssign] = useState<Record<string, string>>({});
+  const [saveUuid, setSaveUuid] = useState<string | null>(null);
+  const [finalAssignmentMap, setFinalAssignmentMap] = useState<Record<string, Ticket[]>>({});
 
-  // Ensure we safely extract the technician-to-tickets map (some APIs return array-wrapped objects)
-  const technicianMap: Record<string, Ticket[]> = Array.isArray(res) ? res[0] : res;
+  useEffect(() => {
+    const loadData = async () => {
+      const res = await fetchTechniciansList();
+      const emptyMap: Record<string, Ticket[]> = {};
+      res.forEach((techName) => {
+        emptyMap[techName] = [];
+      });
+      setTechnicianMap(emptyMap);
+    };
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    const fetchFinalAssignment = async () => {
+      if (!saveUuid) return;
+      try {
+        const res = await getFinalPriorization(saveUuid);
+        setFinalAssignmentMap(res.assignments);
+      } catch (error) {
+        console.error("Error fetching final assignment:", error);
+      }
+    };
+    fetchFinalAssignment();
+  }, [saveUuid]);
+
+  const visibleTechnicians = Object.keys(technicianMap).filter(
+    (name) => name.toLowerCase() !== "others"
+  );
+
+  const handleBackendSubmit = async () => {
+    const roles: Record<string, string> = {};
+    Object.entries(selectedRoles).forEach(([technician, role]) => {
+      roles[technician] =
+        role === "Instalacion" ? "Instalacion|Traslado|Retiro" : "Soporte";
+    });
+
+    const limites: Record<string, number> = {
+      Soporte: maxByType.Soporte,
+      "Instalacion|Traslado|Retiro": maxByType.Instalacion,
+    };
+
+    const payload = { roles, limites, reassign_all: reassignAll };
+
+    try {
+      const data = await submitSetupOrder(payload, reassignAll);
+      console.log("✅ Preview received:", data);
+      setPreviewMap(data);
+      setStep(3);
+    } catch (error) {
+      console.error("❌ Error submitting preview setup:", error);
+    }
+  };
+
+  const handleReset = () => {
+    setShowModal(true);
+    setSaveUuid(null);
+    setStep(1);
+    setSelectedRoles({});
+    setReassignAll(false);
+    setDryRun(false);
+    setMaxByType({ Soporte: 5, Instalacion: 5 });
+    setPreviewMap({});
+    setFinalAssignmentMap({});
+    setUnassignedTickets([]);
+    setSelectedTicketToAssign({});
+  };
+
+  const currentDate = new Date().toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <section className="px-6 py-10">
-      {/* Page Heading */}
-      
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogOverlay className="fixed inset-0 bg-gray-900/70 z-40" />
+        <DialogContent className="fixed z-50 top-1/2 left-1/2 max-h-[90vh] w-full max-w-fit -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg flex flex-col">
+          <div className="overflow-y-auto p-6">
+            <DialogTitle>
+              <VisuallyHidden>Asignación de técnicos</VisuallyHidden>
+            </DialogTitle>
 
-      {/* Responsibilities of each technician */}
-      <div className="grid grid-cols-1 mb-8">
-        <TechnicianResponsibilities data={roles} />
-      </div>
-      {/* Iterate through each technician and their associated tickets */}
-      <div className="w-full rounded-xl border border-gray-200 shadow-md bg-white p-6 mt-3">
-        <CardHeader>
-          <h1 className="text-2xl font-bold">Tickets Priorizados por Técnico</h1>
-          <p className="text-sm text-gray-500 mb-8">Informacion sobre los tickets asignados a cada tecnico.</p>
-        </CardHeader>
-        <div className="grid grid-cols-1 gap-8">
-          {Object.entries(technicianMap).map(([technicianName, tickets]) => (
-            <Card key={technicianName} className="shadow-md">
-              {/* Technician name as card header */}
-              <CardHeader>
-                <CardTitle className="text-lg">{getTechnicianDisplayName(technicianName)}</CardTitle>
-              </CardHeader>
+            {step === 1 && (
+              <StepOneRoleSelection
+                visibleTechnicians={visibleTechnicians}
+                selectedRoles={selectedRoles}
+                setSelectedRoles={setSelectedRoles}
+                reassignAll={reassignAll}
+                setReassignAll={setReassignAll}
+                onNext={() => setStep(2)}
+              />
+            )}
 
-              {/* Render their tickets using the shared DataTable component */}
-              <CardContent>
-                <DataTable columns={columns} data={tickets} />
-              </CardContent>
-            </Card>
-          ))}
+            {step === 2 && (
+              <StepTwoLimitsSelection
+                maxByType={maxByType}
+                setMaxByType={setMaxByType}
+                onSubmit={handleBackendSubmit}
+                onBack={() => setStep(1)}
+              />
+            )}
+
+            {step === 3 && (
+              <StepThreePreview
+                previewMap={previewMap}
+                unassignedTickets={unassignedTickets}
+                selectedTicketToAssign={selectedTicketToAssign}
+                setSelectedTicketToAssign={setSelectedTicketToAssign}
+                setPreviewMap={setPreviewMap}
+                setUnassignedTickets={setUnassignedTickets}
+                setSaveUuid={setSaveUuid}
+                setShowModal={setShowModal}
+                onBack={() => setStep(2)}
+                onSaveSuccess={(uuid) => {
+                  console.log("✅ Assignment saved with UUID:", uuid);
+                  setSaveUuid(uuid);
+                  setShowModal(false);
+                }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {!showModal && saveUuid && (
+        <section className="mt-10 space-y-6">
+          <div className="bg-white p-4 rounded-lg shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold">Asignación</h2>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Calendar size={16} className="text-gray-500" />
+                <span>{currentDate}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                onClick={async () => {
+                  try {
+                    const res = await applyAssignment(saveUuid, dryRun);
+                    console.log("✅ Aplicado:", res);
+                    alert("Asignación aplicada correctamente.");
+                  } catch (err) {
+                    console.error("❌ Error aplicando asignación", err);
+                    alert("Error al aplicar asignación.");
+                  }
+                }}
+                className="bg-blue-600 text-white"
+              >
+                Aplicar en Mikrowisp
+              </Button>
+
+              <Button
+                onClick={async () => {
+                  try {
+                    const res = await notifyAssignment(saveUuid);
+                    console.log("📢 Notificación enviada:", res);
+                    alert("Notificación enviada correctamente.");
+                  } catch (err) {
+                    console.error("❌ Error notificando asignación", err);
+                    alert("Error al notificar asignación.");
+                  }
+                }}
+                className="bg-emerald-600 text-white"
+              >
+                Notificar Técnicos
+              </Button>
+
+              <Button onClick={handleReset} className="bg-gray-700 text-white">
+                Nueva asignación
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {Object.entries(finalAssignmentMap).map(([tech, tickets]) => (
+              <Card key={tech}>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    {getTechnicianDisplayName(tech)}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <DataTable
+                    columns={baseColumns}
+                    data={tickets.map((t) => ({
+                      ...t,
+                      nombre_tecnico: tech,
+                    }))}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!showModal && !saveUuid && (
+        <div className="mt-10 bg-blue-50 border border-blue-300 text-blue-800 p-6 rounded-lg shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold mb-1">Asignación pendiente</h3>
+            <p className="text-sm">
+              Aún no se ha completado el proceso de asignación. Puedes volver a abrir el asistente para continuar.
+            </p>
+          </div>
+          <Button
+            className="bg-blue-600 text-white"
+            onClick={() => setShowModal(true)}
+          >
+            Volver a asignar
+          </Button>
         </div>
-      </div>
+      )}
     </section>
   );
 }

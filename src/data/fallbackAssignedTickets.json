@@ -1,0 +1,39 @@
+{
+  "Juan": [
+    {
+      "id": 30068,
+      "cliente": "Ernesto Vanegas Ardila/0061",
+      "telefono_cliente": "",
+      "direccion_principal": "Finca Playitas ",
+      "asunto": "Cablear Camaras",
+      "estado": "abierto",
+      "categoria": "Instalacion",
+      "nombre_tecnico": null,
+      "numero_tecnico": null,
+      "fecha_soporte": "2025-05-12T10:25:44",
+      "fecha_visita": "2025-05-12",
+      "fecha_cerrado": "0000-00-00 00:00:00",
+      "sin_servicio_flag": 0,
+      "dias_desde_creacion": 22
+    }
+  ],
+  "Julian": [
+    {
+      "id": 30274,
+      "cliente": "Elvia Raquel Aleman Mejia /0194",
+      "telefono_cliente": "3206897405",
+      "direccion_principal": "Cll 3 N 7 49 La Llana",
+      "asunto": "Soporte Sin Servicio",
+      "estado": "abierto",
+      "categoria": "Soporte",
+      "nombre_tecnico": null,
+      "numero_tecnico": null,
+      "fecha_soporte": "2025-05-19T14:14:26",
+      "fecha_visita": "2025-05-19",
+      "fecha_cerrado": "0000-00-00 00:00:00",
+      "sin_servicio_flag": 1,
+      "dias_desde_creacion": 15
+    }
+  ],
+  "Others": []
+}
