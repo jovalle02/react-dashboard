@@ -30,6 +30,7 @@ import StepTwoLimitsSelection from "@/components/ui/assignments/StepTwoLimitsSel
 import StepThreePreview from "@/components/ui/assignments/StepThreePreview";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Calendar } from "lucide-react";
+import ConfirmDialog from "@/components/ui/confirmDialog";
 
 export default function TechnicianTicketsPage() {
   const [dryRun, setDryRun] = useState(false);
@@ -44,6 +45,9 @@ export default function TechnicianTicketsPage() {
   const [selectedTicketToAssign, setSelectedTicketToAssign] = useState<Record<string, string>>({});
   const [saveUuid, setSaveUuid] = useState<string | null>(null);
   const [finalAssignmentMap, setFinalAssignmentMap] = useState<Record<string, Ticket[]>>({});
+  const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const [showNotifyConfirm, setShowNotifyConfirm] = useState(false);
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -183,32 +187,14 @@ export default function TechnicianTicketsPage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <Button
-                onClick={async () => {
-                  try {
-                    const res = await applyAssignment(saveUuid, dryRun);
-                    console.log("✅ Aplicado:", res);
-                    alert("Asignación aplicada correctamente.");
-                  } catch (err) {
-                    console.error("❌ Error aplicando asignación", err);
-                    alert("Error al aplicar asignación.");
-                  }
-                }}
+                onClick={() => setShowApplyConfirm(true)}
                 className="bg-blue-600 text-white"
               >
                 Aplicar en Mikrowisp
               </Button>
 
               <Button
-                onClick={async () => {
-                  try {
-                    const res = await notifyAssignment(saveUuid);
-                    console.log("📢 Notificación enviada:", res);
-                    alert("Notificación enviada correctamente.");
-                  } catch (err) {
-                    console.error("❌ Error notificando asignación", err);
-                    alert("Error al notificar asignación.");
-                  }
-                }}
+                onClick={() => setShowNotifyConfirm(true)}
                 className="bg-emerald-600 text-white"
               >
                 Notificar Técnicos
@@ -259,6 +245,47 @@ export default function TechnicianTicketsPage() {
           </Button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={showApplyConfirm}
+        onCancel={() => setShowApplyConfirm(false)}
+        onConfirm={async () => {
+          setShowApplyConfirm(false);
+          if (!saveUuid) {
+            alert("No hay una asignación válida para aplicar.");
+            return;
+          }
+          try {
+            const res = await applyAssignment(saveUuid, dryRun);
+            console.log("✅ Aplicado:", res);
+            alert("Asignación aplicada correctamente.");
+          } catch (err) {
+            console.error("❌ Error aplicando asignación", err);
+            alert("Error al aplicar asignación.");
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={showNotifyConfirm}
+        onCancel={() => setShowNotifyConfirm(false)}
+        onConfirm={async () => {
+          setShowNotifyConfirm(false);
+          if (!saveUuid) {
+            alert("No hay una asignación válida para notificar.");
+            return;
+          }
+          try {
+            const res = await notifyAssignment(saveUuid);
+            console.log("📢 Notificación enviada:", res);
+            alert("Notificación enviada correctamente.");
+          } catch (err) {
+            console.error("❌ Error notificando asignación", err);
+            alert("Error al notificar asignación.");
+          }
+        }}
+
+      />
     </section>
   );
 }
