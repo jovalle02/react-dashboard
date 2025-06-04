@@ -76,7 +76,7 @@ const StepThreePreview: React.FC<StepThreePreviewProps> = ({
       onSaveSuccess(uuid);
       setShowModal(false);
     } catch (err) {
-      console.error("❌ Error saving assignments", err);
+      console.error("Error saving assignments", err);
       alert("Hubo un error al guardar la priorización.");
     } finally {
       setIsSaving(false);
