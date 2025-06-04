@@ -8,6 +8,7 @@ import { getTechnicianDisplayName } from "@/lib/labels";
 import { X } from "lucide-react";
 import React, { useState } from "react";
 import { submitPriorization } from "@/features/tickets/api";
+import { Row } from "@tanstack/react-table";
 
 export const revalidate = 60;
 
@@ -87,7 +88,7 @@ const StepThreePreview: React.FC<StepThreePreviewProps> = ({
     {
       id: "acciones",
       header: "Acciones",
-      cell: ({ row }: any) => (
+      cell: ({ row }: { row: Row<Ticket> }) => (
         <button
           onClick={() =>
             handleUnassignTicket(row.original.nombre_tecnico || "", row.original.id)
@@ -111,7 +112,7 @@ const StepThreePreview: React.FC<StepThreePreviewProps> = ({
           <li>Reasignar tickets haciendo clic en el icono rojo de quitar.</li>
           <li>Agregar tickets no asignados desde el selector bajo cada técnico.</li>
           <li>Verificar la fecha y técnico asignado por fila.</li>
-          <li>Cuando estés conforme, presiona <strong>"Guardar"</strong> para finalizar.</li>
+          <li>Cuando estés conforme, presiona <strong>&quot;Guardar&quot;</strong> para finalizar.</li>
         </ul>
       </div>
       <div className="grid grid-cols-1 gap-6 mt-4">
