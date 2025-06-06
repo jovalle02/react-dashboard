@@ -26,13 +26,16 @@ export default function StepOneRoleSelection({
 
   return (
     <>
-      <h2 className="text-lg font-bold mb-4">
+      <h2 className="text-lg sm:text-xl font-bold mb-4">
         Selecciona el tipo de soporte para cada técnico
       </h2>
+
       <div className="mb-6 border border-yellow-300 bg-yellow-50 text-sm text-yellow-800 p-4 rounded-md">
-        El rol <strong>Instalación</strong> incluye automáticamente los tipos: <em>Instalación</em>, <em>Traslado</em> y <em>Retiro</em>. 
-        Asegúrate de asignarlo a técnicos que puedan realizar cualquiera de esas tres tareas.
+        El rol <strong>Instalación</strong> incluye automáticamente los tipos:{" "}
+        <em>Instalación</em>, <em>Traslado</em> y <em>Retiro</em>. Asegúrate de
+        asignarlo a técnicos que puedan realizar cualquiera de esas tres tareas.
       </div>
+
       <div className="mb-4">
         <label className="flex items-center gap-2 text-sm font-medium">
           <input
@@ -45,13 +48,17 @@ export default function StepOneRoleSelection({
       </div>
 
       <div className="flex flex-col gap-6 mt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {visibleTechnicians.map((techName) => (
-            <div key={techName} className="border p-4 rounded-md">
-              <h3 className="font-semibold mb-2">
+            <div
+              key={techName}
+              className="border p-4 rounded-md w-full min-w-0 bg-white shadow-sm"
+            >
+              <h3 className="font-semibold mb-3 text-base">
                 {getTechnicianDisplayName(techName)}
               </h3>
-              <div className="flex gap-2">
+
+              <div className="flex flex-wrap gap-3">
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
@@ -69,6 +76,7 @@ export default function StepOneRoleSelection({
                     Instalación
                   </span>
                 </label>
+
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
@@ -90,9 +98,12 @@ export default function StepOneRoleSelection({
             </div>
           ))}
         </div>
-        <Button disabled={!allSelected} onClick={onNext}>
-          Siguiente
-        </Button>
+
+        <div className="flex justify-end">
+          <Button disabled={!allSelected} onClick={onNext}>
+            Siguiente
+          </Button>
+        </div>
       </div>
     </>
   );

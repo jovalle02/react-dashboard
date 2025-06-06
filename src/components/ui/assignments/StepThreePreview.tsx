@@ -1,6 +1,11 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/table/datatable";
 import { columns as baseColumns, Ticket } from "@/components/ui/table/columns";
@@ -16,8 +21,12 @@ interface StepThreePreviewProps {
   previewMap: Record<string, Ticket[]>;
   unassignedTickets: Ticket[];
   selectedTicketToAssign: Record<string, string>;
-  setSelectedTicketToAssign: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  setPreviewMap: React.Dispatch<React.SetStateAction<Record<string, Ticket[]>>>;
+  setSelectedTicketToAssign: React.Dispatch<
+    React.SetStateAction<Record<string, string>>
+  >;
+  setPreviewMap: React.Dispatch<
+    React.SetStateAction<Record<string, Ticket[]>>
+  >;
   setUnassignedTickets: React.Dispatch<React.SetStateAction<Ticket[]>>;
   onSaveSuccess: (uuid: string) => void;
   setSaveUuid: React.Dispatch<React.SetStateAction<string | null>>;
@@ -91,7 +100,10 @@ const StepThreePreview: React.FC<StepThreePreviewProps> = ({
       cell: ({ row }: { row: Row<Ticket> }) => (
         <button
           onClick={() =>
-            handleUnassignTicket(row.original.nombre_tecnico || "", row.original.id)
+            handleUnassignTicket(
+              row.original.nombre_tecnico || "",
+              row.original.id
+            )
           }
           className="text-red-600 hover:text-red-800"
           title="Quitar ticket"
@@ -102,19 +114,22 @@ const StepThreePreview: React.FC<StepThreePreviewProps> = ({
     },
   ];
 
-
   return (
     <>
       <h2 className="text-lg font-bold mb-4">Previsualización de Asignación</h2>
+
       <div className="mb-6 border border-yellow-300 bg-yellow-50 text-sm text-yellow-800 p-4 rounded-md">
         Aquí puedes revisar cómo quedarán asignados los tickets a cada técnico. Puedes:
         <ul className="list-disc list-inside mt-2 space-y-1">
           <li>Reasignar tickets haciendo clic en el icono rojo de quitar.</li>
           <li>Agregar tickets no asignados desde el selector bajo cada técnico.</li>
           <li>Verificar la fecha y técnico asignado por fila.</li>
-          <li>Cuando estés conforme, presiona <strong>&quot;Guardar&quot;</strong> para finalizar.</li>
+          <li>
+            Cuando estés conforme, presiona <strong>&quot;Guardar&quot;</strong> para finalizar.
+          </li>
         </ul>
       </div>
+
       <div className="grid grid-cols-1 gap-6 mt-4">
         {Object.entries(previewMap).map(([technicianName, tickets]) => (
           <Card key={`tech-${technicianName}-${tickets.length}`}>
@@ -124,21 +139,24 @@ const StepThreePreview: React.FC<StepThreePreviewProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <DataTable
-                columns={columns}
-                data={tickets.map((ticket) => ({
-                  ...ticket,
-                  nombre_tecnico: technicianName, // explicitly set from loop context
-                }))}
-              />
+              <div className="overflow-x-auto">
+                <DataTable
+                  columns={columns}
+                  data={tickets.map((ticket) => ({
+                    ...ticket,
+                    nombre_tecnico: technicianName,
+                  }))}
+                />
+              </div>
+
               {unassignedTickets.length > 0 && (
                 <div className="mt-4">
                   <label className="block mb-1 text-sm font-medium">
                     Asignar ticket adicional:
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                     <select
-                      className="border px-2 py-1 rounded"
+                      className="border px-2 py-1 rounded w-full sm:w-auto"
                       value={selectedTicketToAssign[technicianName] || ""}
                       onChange={(e) =>
                         setSelectedTicketToAssign((prev) => ({
@@ -154,7 +172,10 @@ const StepThreePreview: React.FC<StepThreePreviewProps> = ({
                         </option>
                       ))}
                     </select>
-                    <Button onClick={() => handleTicketAssign(technicianName)}>
+                    <Button
+                      onClick={() => handleTicketAssign(technicianName)}
+                      className="w-full sm:w-auto"
+                    >
                       Asignar
                     </Button>
                   </div>
@@ -164,14 +185,14 @@ const StepThreePreview: React.FC<StepThreePreviewProps> = ({
           </Card>
         ))}
 
-        <div className="flex justify-between mt-6">
-          <Button variant="outline" onClick={onBack}>
+        <div className="flex flex-col sm:flex-row justify-between gap-4 mt-6">
+          <Button variant="outline" onClick={onBack} className="w-full sm:w-auto">
             Volver
           </Button>
           <Button
             onClick={handleSaveAssignment}
             disabled={isSaving}
-            className="bg-green-600 text-white"
+            className="w-full sm:w-auto bg-green-600 text-white"
           >
             {isSaving ? "Guardando..." : "Guardar"}
           </Button>
@@ -179,7 +200,6 @@ const StepThreePreview: React.FC<StepThreePreviewProps> = ({
       </div>
     </>
   );
-
 };
 
 export default StepThreePreview;
